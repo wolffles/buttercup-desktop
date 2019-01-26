@@ -6,6 +6,7 @@ import { getQueue } from '../../renderer/system/queue';
 import {
   getCurrentGroupId,
   getCurrentArchiveId,
+  getCurrentEntry,
   getCurrentEntryMode,
   getExpandedKeys
 } from '../selectors';
@@ -25,10 +26,14 @@ import { setExpandedKeys } from '../../shared/actions/ui';
 import { loadOrUnlockArchive } from '../../shared/actions/archives';
 import { loadGroup } from '../../shared/actions/groups';
 
-export const selectEntry = entryId => async (dispatch, getState) => {
+export const selectEntry = (entryId, isSavingNewEntry = false) => async (
+  dispatch,
+  getState
+) => {
   try {
+    const currentEntry = getCurrentEntry(getState());
     const currentEntryMode = getCurrentEntryMode(getState());
-    currentEntryMode === 'new' || currentEntryMode === 'edit'
+    !currentEntry && currentEntryMode === 'new' && !isSavingNewEntry
       ? showConfirmDialog(
           i18n.t('entry.quit-unsave-entry'),
           choice =>
@@ -36,10 +41,7 @@ export const selectEntry = entryId => async (dispatch, getState) => {
               ? dispatch({ type: ENTRIES_SELECTED, payload: entryId })
               : null
         )
-      : dispatch({
-          type: ENTRIES_SELECTED,
-          payload: entryId
-        });
+      : dispatch({ type: ENTRIES_SELECTED, payload: entryId });
   } catch (err) {
     console.error(err);
     showDialog(err);
